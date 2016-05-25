@@ -3,28 +3,6 @@
 #include <stdio.h>
 #include <string.h>
 
-static coroutine void serverroutine(int count, chan endch) {
-  chs (endch, int, 1);
-}
-
-static coroutine void clientroutine(int count, chan endch) {
-  msleep (100);
-  fmill_sock conn = fmill_sock_connect ("tcp://0.0.0.0:7458");
-  struct frm_frame *fr = malloc (sizeof (struct frm_frame));
-  frm_frame_init (fr);
-  frm_frame_set_data (fr, "fatih", 5);
-
-  struct fmill_event ev;
-  chan events = fmill_eventsch (conn);
-  for (int i = 0; i < count; i++) {
-    fmill_send (conn, fr);
-    ev = chr (events, struct fmill_event);
-    assert (ev.conn == NULL);
-  }
-  chs (endch, int, 1);
-  printf ("cli complete.\n");
-}
-
 int main (int argc, char *argv[]) {
   int rc;
   char *addr;
@@ -35,7 +13,7 @@ int main (int argc, char *argv[]) {
   struct nn_stopwatch stopwatch;
 
   if (argc != 4) {
-    printf ("usage: %s connect-to msg-size roundtrip-count\n", argv[0]);
+    printf ("usage: %s bind-to msg-size roundtrip-count\n", argv[0]);
     exit (0);
   }
 
@@ -57,7 +35,8 @@ int main (int argc, char *argv[]) {
     fmill_send (conn, ev.fr);
   }
 
-  msleep (now() + 100000);
+  ev = chr (events, struct fmill_event);
+  assert (ev.fr == NULL && fmill_sock_dead (ev.conn));
 
   return 0;
 }

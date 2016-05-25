@@ -3,28 +3,6 @@
 #include <stdio.h>
 #include <string.h>
 
-static coroutine void serverroutine(int count, chan endch) {
-  fmill_sock sock = fmill_sock_bind ("tcp://0.0.0.0:7458");
-  struct fmill_event ev = chr (fmill_eventsch (sock), struct fmill_event);
-  assert (ev.fr == NULL);
-  fmill_sock conn = ev.conn;
-  printf ("new conn accepted.\n");
-  chan events = fmill_eventsch (conn);
-  for (int i = 0; i < count; i++) {
-    ev = chr (events, struct fmill_event);
-    assert (ev.conn == NULL);
-    fmill_send (conn, ev.fr);
-  }
-  chs (endch, int, 1);
-}
-
-static coroutine void clientroutine(int count, chan endch) {
-  msleep (100);
-
-  chs (endch, int, 1);
-  printf ("cli complete.\n");
-}
-
 int main (int argc, char *argv[]) {
   int rc;
   char *addr;
